@@ -19,23 +19,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
-private const val maxHeight = 100
-
 @Composable
 fun PullToRefreshIndicator(
     indicatorState: RefreshIndicatorState,
-    pullToRefreshProgress: Float
+    pullToRefreshProgress: Float,
+    height: Int = 100
 ) {
     val heightModifier = when (indicatorState) {
         RefreshIndicatorState.PullingDown -> {
             Modifier.height(
                 (pullToRefreshProgress * 100)
                     .roundToInt()
-                    .coerceAtMost(maxHeight).dp,
+                    .coerceAtMost(height).dp,
             )
         }
 
-        RefreshIndicatorState.ReachedThreshold -> Modifier.height(maxHeight.dp)
+        RefreshIndicatorState.ReachedThreshold -> Modifier.height(height.dp)
         RefreshIndicatorState.Refreshing -> Modifier.wrapContentHeight()
         RefreshIndicatorState.Default -> Modifier.height(0.dp)
     }

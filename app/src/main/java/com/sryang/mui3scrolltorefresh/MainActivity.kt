@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
                     PullToRefreshLayout(
                         modifier = Modifier.fillMaxSize(),
                         pullRefreshLayoutState = state,
+                        refreshThreshold = 70,
                         onRefresh = {
                             coroutine.launch {
                                 delay(1000)

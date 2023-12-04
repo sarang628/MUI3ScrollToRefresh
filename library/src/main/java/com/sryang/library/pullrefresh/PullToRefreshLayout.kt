@@ -14,13 +14,14 @@ fun PullToRefreshLayout(
     modifier: Modifier = Modifier,
     pullRefreshLayoutState: PullToRefreshLayoutState,
     onRefresh: () -> Unit,
-    content: @Composable () -> Unit,
+    refreshThreshold: Int = 120,
+    content: @Composable () -> Unit
 ) {
     val refreshIndicatorState by pullRefreshLayoutState.refreshIndicatorState
 
     val pullToRefreshState = rememberPullRefreshState(
         refreshing = refreshIndicatorState == RefreshIndicatorState.Refreshing,
-        refreshThreshold = 120.dp,
+        refreshThreshold = refreshThreshold.dp,
         onRefresh = {
             onRefresh()
             pullRefreshLayoutState.refresh()
@@ -47,6 +48,7 @@ fun PullToRefreshLayout(
         PullToRefreshIndicator(
             indicatorState = refreshIndicatorState,
             pullToRefreshProgress = pullToRefreshState.progress,
+            height = refreshThreshold
         )
         Box(modifier = Modifier.weight(1f)) {
             content()
