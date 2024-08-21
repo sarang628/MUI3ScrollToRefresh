@@ -3,11 +3,17 @@ package com.sryang.library.pullrefresh
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun PullToRefreshLayout(
@@ -15,7 +21,7 @@ fun PullToRefreshLayout(
     pullRefreshLayoutState: PullToRefreshLayoutState,
     onRefresh: () -> Unit,
     refreshThreshold: Int = 120,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val refreshIndicatorState by pullRefreshLayoutState.refreshIndicatorState
 
@@ -54,5 +60,27 @@ fun PullToRefreshLayout(
             content()
         }
     }
+}
 
+@Preview(showBackground = true)
+@Composable
+fun PreviewPullToRefreshLayout() {
+    val state = rememberPullToRefreshState()
+    val coroutine = rememberCoroutineScope()
+    PullToRefreshLayout(
+        pullRefreshLayoutState = state,
+        onRefresh = {
+            coroutine.launch {
+                delay(1000)
+                state.updateState(RefreshIndicatorState.Default)
+            }
+        },
+        content = {
+            LazyColumn {
+                items(101) {
+                    Text(text = "Item $it")
+                }
+            }
+        }
+    )
 }

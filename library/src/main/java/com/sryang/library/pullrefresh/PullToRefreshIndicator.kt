@@ -16,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -23,7 +25,10 @@ import kotlin.math.roundToInt
 fun PullToRefreshIndicator(
     indicatorState: RefreshIndicatorState,
     pullToRefreshProgress: Float,
-    height: Int = 100
+    height: Int = 100,
+    indicatorSize: Dp = 40.dp,
+    indicatorColor: Color = MaterialTheme.colorScheme.primary,
+    pullDownIndicatorColor: Color = MaterialTheme.colorScheme.inversePrimary,
 ) {
     val heightModifier = when (indicatorState) {
         RefreshIndicatorState.PullingDown -> {
@@ -51,18 +56,38 @@ fun PullToRefreshIndicator(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(
-                text = indicatorState.name,
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.Black,
-            )
             if (indicatorState == RefreshIndicatorState.Refreshing) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = Color.Black,
+                    modifier = Modifier.size(indicatorSize),
+                    color = indicatorColor,
                     strokeWidth = 2.dp,
+                )
+            } else if (indicatorState == RefreshIndicatorState.PullingDown) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(indicatorSize),
+                    color = pullDownIndicatorColor,
+                    strokeWidth = 2.dp,
+                    progress = pullToRefreshProgress
+                )
+            } else if (indicatorState == RefreshIndicatorState.ReachedThreshold) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(indicatorSize),
+                    color = indicatorColor,
+                    strokeWidth = 2.dp,
+                    progress = pullToRefreshProgress
                 )
             }
         }
     }
+}
+
+
+@Preview
+@Composable
+fun PreviewPullToRefreshIndicator() {
+    PullToRefreshIndicator(
+        indicatorState = RefreshIndicatorState.PullingDown,
+        pullToRefreshProgress = 0.5f,
+        height = 100
+    )
 }
