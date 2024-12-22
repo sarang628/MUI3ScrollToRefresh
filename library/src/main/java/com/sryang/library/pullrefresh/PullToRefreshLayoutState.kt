@@ -7,9 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class PullToRefreshLayoutState {
 
-    private val _lastRefreshTime: MutableStateFlow<Long> =
-        MutableStateFlow(System.currentTimeMillis())
-
     var refreshIndicatorState = mutableStateOf(RefreshIndicatorState.Default)
         private set
 
@@ -18,7 +15,6 @@ class PullToRefreshLayoutState {
     }
 
     fun refresh() {
-        _lastRefreshTime.value = System.currentTimeMillis()
         updateState(RefreshIndicatorState.Refreshing)
     }
 }
