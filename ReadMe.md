@@ -4,17 +4,15 @@
 
 
 
-# 어떻게 스크롤 했을 때 화면을 아래로 끌어당길 수 있는가?
+# 어떻게 스크롤 했을 때 화면을 아래로 끌어 당길 수 있는가?
 
-NestedScrollConnection
+- 프로그레스바(a)와 컨텐츠(b)를 위 아래로(C, Colunm of compose)으로 배치 (PullToRefreshLayout)
 
+- b가 스크롤 최상단에 도달을 감지할 수 있는 장치 마련(PullRefreshNestedScrollConnection)
 
-## 1. 사용자 입력 감지 (Drag 동작)
-- PullRefreshNestedScrollConnection 클래스가 nestedScroll 메커니즘을 통해 사용자의 스크롤 동작을 감지합니다.
-- onPreScroll: 사용자가 위로 스크롤(available.y < 0)할 때 호출.
-- onPostScroll: 사용자가 아래로 당기기 시작(available.y > 0)하면 호출.
-- onPull 메서드가 호출되어 사용자가 당긴 거리를 계산하고 상태를 업데이트합니다.
+- b가 최상단에서 스크롤 시 b는 더이상 스크롤 되지 않더라도 '손가락(pointer)으로 계속 swipe down하는 값'(d)을 가져오는 방법(PullRefreshNestedScrollConnection)
 
+- d 값 만큼 a의 높이 와 애니메이션을 조정한다.
 
 
 

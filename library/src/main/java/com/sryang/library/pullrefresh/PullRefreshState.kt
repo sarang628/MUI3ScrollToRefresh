@@ -3,63 +3,22 @@ package com.sryang.library.pullrefresh
 import android.util.Log
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.MutatorMutex
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.debugInspectorInfo
-import androidx.compose.ui.platform.inspectable
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.pow
 
-@Composable
-fun rememberPullRefreshState(
-    refreshing: Boolean,
-    onRefresh: () -> Unit,
-    refreshThreshold: Dp = PullRefreshDefaults.RefreshThreshold,
-    refreshingOffset: Dp = PullRefreshDefaults.RefreshingOffset,
-): PullRefreshState {
-    require(refreshThreshold > 0.dp) { "The refresh trigger must be greater than zero!" }
-
-    val scope = rememberCoroutineScope()
-    val onRefreshState = rememberUpdatedState(onRefresh)
-    val thresholdPx: Float
-    val refreshingOffsetPx: Float
-
-    with(LocalDensity.current) {
-        thresholdPx = refreshThreshold.toPx()
-        refreshingOffsetPx = refreshingOffset.toPx()
-    }
-
-    val state = remember(scope) {
-        PullRefreshState(scope, onRefreshState, refreshingOffsetPx, thresholdPx)
-    }
-
-    SideEffect {
-        state.setRefreshing(refreshing)
-        state.setThreshold(thresholdPx)
-        state.setRefreshingOffset(refreshingOffsetPx)
-    }
-
-    return state
-}
-
 /**
- * A state object that can be used in conjunction with [pullRefresh] to add pull-to-refresh
+ * A state object that can be used in conjunction with [nestedScrollForPullRefresh] to add pull-to-refresh
  * behaviour to a scroll component. Based on Android's SwipeRefreshLayout.
  *
  * Provides [progress], a float representing how far the user has pulled as a percentage of the
@@ -77,7 +36,27 @@ class PullRefreshState internal constructor(
     refreshingOffset: Float,
     threshold: Float
 ) {
-    val TAG = "__PullRefreshState"
+    private val tag = "__PullRefreshState"
+
+    /**
+     * The distance pulled is multiplied by this value to give us the adjusted distance pulled, which
+     * is used in calculating the indicator position (when the adjusted distance pulled is less than
+     * the refresh threshold, it is the indicator position, otherwise the indicator position is
+     * derived from the progress).
+     */
+    private val DragMultiplier = 0.5f
+
+    /** 부모가 당겨진 값 */
+    private var distancePulled by mutableFloatStateOf(0f)
+
+    /** 임계값 */
+    private var threshold by mutableFloatStateOf(threshold)
+    private var refreshingOffset by mutableFloatStateOf(refreshingOffset)
+
+    /**
+     * 부모가 당겨진 값 * 드래그 감도
+     */
+    private val adjustedDistancePulled by derivedStateOf { distancePulled * DragMultiplier }
 
     /**
      * A float representing how far the user has pulled as a percentage of the refreshThreshold.
@@ -88,34 +67,46 @@ class PullRefreshState internal constructor(
      * two times the refreshThreshold.
      */
     val progress get() = adjustedDistancePulled / threshold
-    private val adjustedDistancePulled by derivedStateOf { distancePulled * DragMultiplier }
+
+    /** 갱신중 여부 */
     private var refreshing by mutableStateOf(false)
     private var position by mutableFloatStateOf(0f)
-    /** 부모가 당겨진 값 */
-    private var distancePulled by mutableFloatStateOf(0f)
-    private var threshold by mutableFloatStateOf(threshold)
-    private var refreshingOffset by mutableFloatStateOf(refreshingOffset)
+
 
     /**
      * 당김 이벤트 처리
      *
-     * @param pullDelta 입력된 드레그 거리
+     * 함수가 호출되는 case
      *
-     * @return 프로그레스바가 표시되어야 하는 높이 (음수 값이 되면 부모화면이 위로 스크롤 되서 발생 안하게 해야 함)
+     * 1. 자식뷰를 swiping up 할 경우
+     *  - 부모가 당겨진 상태(프로그레스바가 보여지는 상태)에서 스와이프를 올릴 경우 이를 처리해야해서 필요
+     *
+     * 2. 자식뷰가 swiping down 할 경우(자식뷰가 끝까지 올라간 상태에서)
+     *   - 부모를 아래로 당기기(프로그레스바를 보여지게) 위해
+     *
+     * @param pullDelta 입력된 드레그 거리 swipedown을 하면 양수 swipeup을 하면 음수가 들어옴
+     *
+     * @return 프로그레스바가 표시되어야 하는 높이 (부모를 새로 당겨야 total 값  - 이전 부모가 당겨진 total 값)
      * */
     internal fun onPull(pullDelta: Float): Float {
         if (refreshing) return 0f // Already refreshing, do nothing.
 
-        /** 계산된 새로운 거리 */
-        val newOffset = (distancePulled + pullDelta).coerceAtLeast(0f)
+        /**
+         * 부모가 당겨진 값 갱신
+         *
+         * 부모가 당겨진 값  + 스와이프 업(-)/다운(+) 값
+         * 결과가 음수이면 0으로 처리한다.
+         *
+         *  */
+        val newDistancePulled = (distancePulled + pullDelta).coerceAtLeast(0f)
 
-        val dragConsumed = newOffset - distancePulled
-        distancePulled = newOffset
+        val dragConsumed = newDistancePulled - distancePulled
+        distancePulled = newDistancePulled
         position = calculateIndicatorPosition()
 
         Log.d(
-            TAG,
-            "newOffset($newOffset) = distancePulled($distancePulled) + pullDelta($pullDelta) = ${distancePulled + pullDelta}, dragConsumed :${dragConsumed}"
+            tag,
+            "부모가 당겨진 값($distancePulled) + 스와이프 업/다운:($pullDelta) = 새로 당겨진 값: ${distancePulled + pullDelta}, dragConsumed :${dragConsumed}"
         )
         return dragConsumed
     }
@@ -206,14 +197,6 @@ object PullRefreshDefaults {
     val RefreshingOffset = 56.dp
 }
 
-/**
- * The distance pulled is multiplied by this value to give us the adjusted distance pulled, which
- * is used in calculating the indicator position (when the adjusted distance pulled is less than
- * the refresh threshold, it is the indicator position, otherwise the indicator position is
- * derived from the progress).
- */
-private const val DragMultiplier = 0.5f
-
 
 /**
  * A nested scroll modifier that provides scroll events to [state].
@@ -227,17 +210,10 @@ private const val DragMultiplier = 0.5f
  * The state will be updated by this modifier.
  * @param enabled If not enabled, all scroll delta and fling velocity will be ignored.
  */
-// TODO(b/244423199): Move pullRefresh into its own material library similar to material-ripple.
-fun Modifier.pullRefresh(
+fun nestedScrollForPullRefresh(
     state: PullRefreshState,
     enabled: Boolean = true
-) = inspectable(inspectorInfo = debugInspectorInfo {
-    name = "pullRefresh"
-    properties["state"] = state
-    properties["enabled"] = enabled
-}) {
-    Modifier.pullRefresh(state::onPull, state::onRelease, enabled)
-}
+) = nestedScrollForPullRefresh(state::onPull, state::onRelease, enabled)
 
 /**
  * A nested scroll modifier that provides [onPull] and [onRelease] callbacks to aid building custom
@@ -261,15 +237,8 @@ fun Modifier.pullRefresh(
  * @param enabled If not enabled, all scroll delta and fling velocity will be ignored and neither
  * [onPull] nor [onRelease] will be invoked.
  */
-fun Modifier.pullRefresh(
+fun nestedScrollForPullRefresh(
     onPull: (pullDelta: Float) -> Float,
     onRelease: suspend (flingVelocity: Float) -> Float,
     enabled: Boolean = true
-) = inspectable(inspectorInfo = debugInspectorInfo {
-    name = "pullRefresh"
-    properties["onPull"] = onPull
-    properties["onRelease"] = onRelease
-    properties["enabled"] = enabled
-}) {
-    Modifier.nestedScroll(PullRefreshNestedScrollConnection(onPull, onRelease, enabled))
-}
+) = Modifier.nestedScroll(PullRefreshNestedScrollConnection(onPull, onRelease, enabled))
