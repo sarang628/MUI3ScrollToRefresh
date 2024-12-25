@@ -20,8 +20,8 @@ nested scroll은 부모와 자식둘다 스크롤이 가능한데 겹쳐져있�
 
 ### onPreScroll()
 
-자식이 스크롤이 된다면 onPreScroll 에서 움직이는 수치들이 들어온다.
+자식 스크롤에서 발생한 스크롤 이벤트를 부모로 넘겨줄지 자식에서 처리할지 결정할 수 있다.
 
-### onPreScroll()
+### onPostScroll()
 
 부모가 스크롤 된다면 onPostScroll 에서 움직이는 수치들이 들어온다.

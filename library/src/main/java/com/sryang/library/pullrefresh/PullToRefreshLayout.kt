@@ -14,9 +14,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * pull to refresh 레이아웃
+ * @param pullRefreshLayoutState pull to refresh 상태. 스스로 상태를 변경 시킬 수 있음
+ */
 @Composable
 fun PullToRefreshLayout(
-    modifier: Modifier = Modifier,
     pullRefreshLayoutState: PullToRefreshLayoutState,
     onRefresh: () -> Unit,
     refreshThreshold: Int = 120,

@@ -1,9 +1,10 @@
 package com.sryang.mui3scrolltorefresh
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,6 +31,8 @@ fun NestedScrollConnectionPractice() {
 
     // create nested scroll connection to react to nested scroll events (participate like a parent)
     val nestedScrollConnection = remember {
+        var a = -10.0
+
         object : NestedScrollConnection {
             override fun onPostScroll(
                 consumed: Offset,
@@ -43,27 +46,40 @@ fun NestedScrollConnectionPractice() {
                 //return Offset(x = 0f, y = weConsumed)
                 onPostScroll =
                     "onPostScroll:(${consumed.x} ${consumed.y}, ${available.x} ${available.y}, ${source})"
-                return super.onPostScroll(consumed, available, source)
+//                return super.onPostScroll(consumed, available, source)
+                return Offset(available.x, available.y)
+
             }
 
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 onPreScroll = "onPostScroll:(${available.x} ${available.y}, ${source})"
-                return super.onPreScroll(available, source)
+
+                a += available.y
+
+                if (a < 0)
+                    return Offset(available.x, available.y)
+                else
+                    return super.onPreScroll(available, source)
+
             }
         }
     }
 
-    Column {
-        Text("$onPreScroll")
-        Text("$onPostScroll")
-        Box(
+    Column(
+        Modifier
+            .size(200.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Column(
             Modifier
-                .size(200.dp)
+                .size(400.dp)
                 .nestedScroll(nestedScrollConnection)
         ) {
+            Text("$onPreScroll")
+            Text("$onPostScroll")
             LazyColumn {
-                items(1000) {
-                    Text("abcd")
+                items(100) {
+                    Text("$it")
                 }
             }
         }
