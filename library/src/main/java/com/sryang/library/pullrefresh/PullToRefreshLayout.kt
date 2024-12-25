@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun PullToRefreshLayout(
+    modifier: Modifier = Modifier,
     pullRefreshLayoutState: PullToRefreshLayoutState,
     onRefresh: () -> Unit,
     refreshThreshold: Int = 120,
@@ -49,7 +50,7 @@ fun PullToRefreshLayout(
     }
 
     Column(
-        modifier = nestedScrollForPullRefresh(pullToRefreshState),
+        modifier = modifier.nestedScrollForPullRefresh(pullToRefreshState),
     ) {
         PullToRefreshIndicator(
             indicatorState = refreshIndicatorState,

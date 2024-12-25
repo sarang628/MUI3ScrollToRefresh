@@ -210,7 +210,7 @@ object PullRefreshDefaults {
  * The state will be updated by this modifier.
  * @param enabled If not enabled, all scroll delta and fling velocity will be ignored.
  */
-fun nestedScrollForPullRefresh(
+fun Modifier.nestedScrollForPullRefresh(
     state: PullRefreshState,
     enabled: Boolean = true
 ) = nestedScrollForPullRefresh(state::onPull, state::onRelease, enabled)
@@ -237,7 +237,7 @@ fun nestedScrollForPullRefresh(
  * @param enabled If not enabled, all scroll delta and fling velocity will be ignored and neither
  * [onPull] nor [onRelease] will be invoked.
  */
-fun nestedScrollForPullRefresh(
+fun Modifier.nestedScrollForPullRefresh(
     onPull: (pullDelta: Float) -> Float,
     onRelease: suspend (flingVelocity: Float) -> Float,
     enabled: Boolean = true
