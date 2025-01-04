@@ -1,6 +1,5 @@
 package com.sryang.library.pullrefresh
 
-import android.util.Log
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.MutatorMutex
 import androidx.compose.runtime.State
